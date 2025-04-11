@@ -7,18 +7,27 @@ import sys
 from pathlib import Path
 
 class Color:
-    RED = '\033[91m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    MAGENTA = '\033[95m'
-    CYAN = '\033[96m'
-    RESET = '\033[0m'
-    BOLD = '\033[1m'
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    MAGENTA = "\033[95m"
+    CYAN = "\033[96m"
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
     BLINK = "\033[5m"
 
 def get_base_path():
-    return Path("/storage/emulated/0/Live")
+    primary = Path("/storage/emulated/0/Live")
+    fallback = Path("/Penyimpanan internal/Live")
+    if primary.exists():
+        return primary
+    elif fallback.exists():
+        print(f"{Color.YELLOW}[!] Folder default tidak ditemukan, menggunakan fallback: {fallback}{Color.RESET}")
+        return fallback
+    else:
+        print(f"{Color.RED}[✘] Tidak ditemukan folder 'Live' di lokasi manapun.{Color.RESET}")
+        return primary
 
 def monitor_stderr(process, log_file):
     with open(log_file, "w", encoding="utf-8") as log:
@@ -112,9 +121,9 @@ def start_stream(video_file, stream_key, stream_url, stream_duration):
 
 def read_stream_keys():
     base_path = get_base_path()
-    data_file = base_path / "StreamKey.txt"
+    data_file = base_path / "StreamKeyYoutube.txt"
     if not data_file.exists():
-        print(f"{Color.RED}[✘] File StreamKey.txt tidak ditemukan.{Color.RESET}")
+        print(f"{Color.RED}[✘] File StreamKeyYoutube.txt tidak ditemukan.{Color.RESET}")
         return []
     with open(data_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
