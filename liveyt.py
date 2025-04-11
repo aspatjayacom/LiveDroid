@@ -20,14 +20,19 @@ class Color:
 def get_base_path():
     primary = Path("/storage/emulated/0/Live")
     fallback = Path("/Penyimpanan internal/Live")
-
     if primary.exists() and os.access(primary, os.R_OK):
         return primary
     elif fallback.exists() and os.access(fallback, os.R_OK):
-        print(f"{Color.YELLOW}[!] Folder default tidak bisa diakses, menggunakan fallback: {fallback}{Color.RESET}")
+        print(f"{Color.YELLOW}[!] Folder default tidak bisa diakses atau tidak ada, menggunakan fallback: {fallback}{Color.RESET}")
         return fallback
     else:
         print(f"{Color.RED}[✘] Tidak ditemukan atau tidak bisa akses folder 'Live'.{Color.RESET}")
+        return fallback
+    elif fallback.exists():
+        print(f"{Color.YELLOW}[!] Folder default tidak ditemukan, menggunakan fallback: {fallback}{Color.RESET}")
+        return fallback
+    else:
+        print(f"{Color.RED}[✘] Tidak ditemukan folder 'Live' di lokasi manapun.{Color.RESET}")
         return primary
 
 def monitor_stderr(process, log_file):
