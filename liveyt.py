@@ -61,14 +61,13 @@ def start_stream(video_file, stream_key, stream_url, stream_duration):
         command += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100"]
 
     command += ["-c:v", "copy"]
-    command += ["-c:a", "aac", "-b:a", "128k"]
-    command += ["-threads", "1"]
+    command += ["-c:a", "copy"]
+    command += ["-threads", "0"]
     command += ["-f", "flv", stream_url]
 
     nice_level = 5
 
     try:
-        print(f"{Color.CYAN}[▶] Memulai streaming: {video_file} -> {stream_url}{Color.RESET}")
         process = subprocess.Popen([
             "nice", f"-n{nice_level}", *command
         ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
@@ -137,7 +136,7 @@ def main():
         return
 
     try:
-        duration_input = input(f"{Color.YELLOW}[?] Masukkan Durasi Live (dalam jam): {Color.RESET}").strip()
+        duration_input = input(f"{Color.YELLOW}[⏰] Masukkan Durasi Live (dalam jam): {Color.RESET}").strip()
         duration = int(float(duration_input) * 3600)
     except ValueError:
         print(f"{Color.YELLOW}[!] Durasi tidak valid, default ke 1 jam{Color.RESET}")
@@ -146,13 +145,13 @@ def main():
     if len(stream_list) == 1:
         video_file, stream_key = stream_list[0]
         full_url = f"{default_stream_url}/{stream_key}"
-        confirm = input(f"\n{Color.YELLOW}[?] Jalankan live streaming sekarang? (Y/N): {Color.RESET}").strip().upper()
+        confirm = input(f"{Color.YELLOW}[📡] Jalankan live streaming sekarang? (Y/N): {Color.RESET}").strip().upper()
         if confirm == "Y":
             start_stream(video_file, stream_key, full_url, duration)
         else:
             print(f"{Color.RED}[✘] Live streaming dibatalkan.{Color.RESET}")
     else:
-        confirm = input(f"\n{Color.YELLOW}[?] Jalankan Semua live dari List Stream? (Y/N): {Color.RESET}").strip().upper()
+        confirm = input(f"\n{Color.YELLOW}[📡] Jalankan Semua live dari List Stream? (Y/N): {Color.RESET}").strip().upper()
         if confirm != "Y":
             print(f"{Color.RED}[✘] Live streaming dibatalkan.{Color.RESET}")
             return
