@@ -65,7 +65,7 @@ def start_stream(video_file, stream_url, stream_duration):
     command += ["-threads", "1"]
     command += ["-f", "flv", stream_url]
 
-    nice_level = 5  # Default nice level
+    nice_level = 5
 
     try:
         process = subprocess.Popen([
@@ -111,9 +111,9 @@ def start_stream(video_file, stream_url, stream_duration):
 
 def read_stream_keys():
     base_path = get_base_path()
-    data_file = base_path / "StreamKey.txt"
+    data_file = base_path / "StreamKeyTiktok.txt"
     if not data_file.exists():
-        print(f"{Color.RED} File StreamKey.txt tidak ditemukan. {Color.RESET}")
+        print(f"{Color.RED} File StreamKeyTiktok.txt tidak ditemukan. {Color.RESET}")
         return []
     with open(data_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
