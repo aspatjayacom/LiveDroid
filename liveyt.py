@@ -28,12 +28,7 @@ def get_base_path():
     else:
         print(f"{Color.RED}[✘] Tidak ditemukan atau tidak bisa akses folder 'Live'.{Color.RESET}")
         return fallback
-    elif fallback.exists():
-        print(f"{Color.YELLOW}[!] Folder default tidak ditemukan, menggunakan fallback: {fallback}{Color.RESET}")
-        return fallback
-    else:
-        print(f"{Color.RED}[✘] Tidak ditemukan folder 'Live' di lokasi manapun.{Color.RESET}")
-        return primary
+
 
 def monitor_stderr(process, log_file):
     with open(log_file, "w", encoding="utf-8") as log:
