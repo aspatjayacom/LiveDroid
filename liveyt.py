@@ -7,28 +7,18 @@ import sys
 from pathlib import Path
 
 class Color:
-    RED = "\033[91m"
-    GREEN = "\033[92m"
-    YELLOW = "\033[93m"
-    BLUE = "\033[94m"
-    MAGENTA = "\033[95m"
-    CYAN = "\033[96m"
-    RESET = "\033[0m"
-    BOLD = "\033[1m"
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
     BLINK = "\033[5m"
 
 def get_base_path():
-    primary = Path("/storage/emulated/0/Live")
-    fallback = Path("/Penyimpanan internal/Live")
-    if primary.exists() and os.access(primary, os.R_OK):
-        return primary
-    elif fallback.exists() and os.access(fallback, os.R_OK):
-        print(f"{Color.YELLOW}[!] Folder default tidak bisa diakses atau tidak ada, menggunakan fallback: {fallback}{Color.RESET}")
-        return fallback
-    else:
-        print(f"{Color.RED}[✘] Tidak ditemukan atau tidak bisa akses folder 'Live'.{Color.RESET}")
-        return fallback
-
+    return Path("/storage/emulated/0/Live")
 
 def monitor_stderr(process, log_file):
     with open(log_file, "w", encoding="utf-8") as log:
