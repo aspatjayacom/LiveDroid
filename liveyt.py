@@ -26,7 +26,7 @@ def monitor_stderr(process, log_file):
             if any(keyword in line.lower() for keyword in ["error", "failed", "disconnect", "broken"]):
                 log.write(f"[!!] {line}")
 
-def start_stream(video_file, stream_key, stream_url, stream_duration, status_dict):
+def start_stream(video_file, stream_key, stream_url, stream_duration):
     base_path = get_base_path()
     logs_dir = base_path
     logs_dir.mkdir(exist_ok=True)
@@ -60,7 +60,10 @@ def start_stream(video_file, stream_key, stream_url, stream_duration, status_dic
     if not has_audio.stdout.strip():
         command += ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100"]
 
-    command += ["-c:v", "copy", "-c:a", "copy", "-threads", "0", "-f", "flv", stream_url]
+    command += ["-c:v", "copy"]
+    command += ["-c:a", "copy"]
+    command += ["-threads", "0"]
+    command += ["-f", "flv", stream_url]
 
     nice_level = 5
 
@@ -73,18 +76,19 @@ def start_stream(video_file, stream_key, stream_url, stream_duration, status_dic
         monitor_thread.daemon = True
         monitor_thread.start()
 
-        try:
+        def status_updater():
             for i in range(stream_duration, 0, -60):
                 mins = i // 60
-                status = f"{Color.RED}LIVE: {video_file} | Sisa waktu: {mins} menit{Color.RESET}"
-                status_dict[video_file] = status
+                status = f"{Color.RED} LIVE: {video_file} | Sisa waktu: {mins} menit{Color.RESET}"
+                print(status)
                 with open(log_file, "a", encoding="utf-8") as log:
                     log.write(f"{status}\n")
                 time.sleep(60)
-        except KeyboardInterrupt:
-            print(f"\n{Color.YELLOW} Streaming dihentikan oleh pengguna.{Color.RESET}")
-            with open(log_file, "a", encoding="utf-8") as log:
-                log.write("Streaming dihentikan oleh pengguna (KeyboardInterrupt)\n")
+
+        updater_thread = threading.Thread(target=status_updater)
+        updater_thread.start()
+
+        updater_thread.join()
 
         process.terminate()
         try:
@@ -105,16 +109,6 @@ def start_stream(video_file, stream_key, stream_url, stream_duration, status_dic
     except Exception as e:
         with open(log_file, "w", encoding="utf-8") as log:
             log.write(f"[!!] Terjadi error: {e}\n")
-
-def print_status(status_dict):
-    try:
-        while True:
-            print("\033[H\033[J", end="")  # Clear terminal (ANSI escape)
-            for status in status_dict.values():
-                print(status)
-            time.sleep(60)
-    except KeyboardInterrupt:
-        pass
 
 def read_stream_keys():
     base_path = get_base_path()
@@ -149,17 +143,12 @@ def main():
         print(f"{Color.YELLOW} Durasi tidak valid, default ke 1 jam{Color.RESET}")
         duration = 3600
 
-    status_dict = {}
-    status_thread = threading.Thread(target=print_status, args=(status_dict,))
-    status_thread.start()
-
-    threads = []
     if len(stream_list) == 1:
         video_file, stream_key = stream_list[0]
         full_url = f"{default_stream_url}/{stream_key}"
         confirm = input(f"{Color.YELLOW} Jalankan live streaming sekarang? (Y/N): {Color.RESET}").strip().upper()
         if confirm == "Y":
-            start_stream(video_file, stream_key, full_url, duration, status_dict)
+            start_stream(video_file, stream_key, full_url, duration)
         else:
             print(f"{Color.RED} Live streaming dibatalkan.{Color.RESET}")
     else:
@@ -170,18 +159,12 @@ def main():
 
         for idx, (video_file, stream_key) in enumerate(stream_list):
             full_url = f"{default_stream_url}/{stream_key}"
-            t = threading.Thread(
+            threading.Thread(
                 target=start_stream,
-                args=(video_file, stream_key, full_url, duration, status_dict)
-            )
-            t.start()
-            threads.append(t)
+                args=(video_file, stream_key, full_url, duration),
+                daemon=True
+            ).start()
             time.sleep(5)
-
-    for t in threads:
-        t.join()
-
-    status_thread.join()
 
 if __name__ == "__main__":
     main()
