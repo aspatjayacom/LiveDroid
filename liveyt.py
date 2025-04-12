@@ -128,11 +128,18 @@ def read_stream_keys():
     return pairs
 
 def print_status_realtime(status_dict, lock):
+    printed_lines = 0
+    header = f"{Color.CYAN}\nStatus Live Streaming Aktif:{Color.RESET}"
+    print(header)
     while True:
         with lock:
             lines = [f"{Color.RED} LIVE: {video} | Sisa waktu: {mins} menit{Color.RESET}" for video, mins in status_dict.items()]
-        sys.stdout.write("\033[H\033[J")  # Clear screen and move cursor to top
-        print("\n".join(lines))
+        if printed_lines:
+            sys.stdout.write("\033[F\033[K" * (printed_lines + 1))  # move up and clear, including header
+        print(header)
+        printed_lines = len(lines)
+        for line in lines:
+            print(line)
         time.sleep(60)
 
 def main():
