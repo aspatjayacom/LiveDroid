@@ -25,7 +25,10 @@ def monitor_stderr(process, log_file):
             if any(keyword in line.lower() for keyword in ["error", "failed", "disconnect", "broken"]):
                 log.write(f"[!!] {line}")
 
-def start_stream(video_file, stream_key, stream_url, stream_duration, status_dict, lock):
+def clear_terminal():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def start_stream(video_file, stream_key, stream_url, stream_duration, live_status):
     base_path = get_base_path()
     logs_dir = base_path
     logs_dir.mkdir(exist_ok=True)
@@ -77,14 +80,15 @@ def start_stream(video_file, stream_key, stream_url, stream_duration, status_dic
         def status_updater():
             mins = stream_duration // 60
             while mins > 0:
-                with lock:
-                    status_dict[video_file] = mins
+                status = f"{Color.RED} LIVE: {video_file} | Sisa waktu: {mins} menit{Color.RESET}"
+                live_status[video_file] = status
+                clear_terminal()
+                print(f"{Color.RED}{Color.BOLD}\n==============================\n     LIVE YOUTUBE ANDROID\n     by Ananda Chakim\n=============================={Color.RESET}\n")
+                print("\n".join(live_status.values()), flush=True)
                 with open(log_file, "a", encoding="utf-8") as log:
-                    log.write(f"LIVE: {video_file} | Sisa waktu: {mins} menit\n")
+                    log.write(f"{status}\n")
                 mins -= 1
                 time.sleep(60)
-            with lock:
-                del status_dict[video_file]
 
         updater_thread = threading.Thread(target=status_updater)
         updater_thread.start()
@@ -127,21 +131,6 @@ def read_stream_keys():
             pairs.append((video.strip(), key.strip()))
     return pairs
 
-def print_status_realtime(status_dict, lock):
-    printed_lines = 0
-    header = f"{Color.CYAN}\nStatus Live Streaming Aktif:{Color.RESET}"
-    print(header)
-    while True:
-        with lock:
-            lines = [f"{Color.RED} LIVE: {video} | Sisa waktu: {mins} menit{Color.RESET}" for video, mins in status_dict.items()]
-        if printed_lines:
-            sys.stdout.write("\033[F\033[K" * (printed_lines + 1))  # move up and clear, including header
-        print(header)
-        printed_lines = len(lines)
-        for line in lines:
-            print(line)
-        time.sleep(60)
-
 def main():
     print(f"{Color.RED}{Color.BOLD}")
     print("==============================")
@@ -167,16 +156,14 @@ def main():
         print(f"{Color.RED} Live streaming dibatalkan.{Color.RESET}")
         return
 
-    status_dict = {}
-    lock = threading.Lock()
-    threading.Thread(target=print_status_realtime, args=(status_dict, lock), daemon=True).start()
+    live_status = {}  # Dictionary to store the status of each live video
 
     threads = []
     for idx, (video_file, stream_key) in enumerate(stream_list):
         full_url = f"{default_stream_url}/{stream_key}"
         t = threading.Thread(
             target=start_stream,
-            args=(video_file, stream_key, full_url, duration, status_dict, lock)
+            args=(video_file, stream_key, full_url, duration, live_status)
         )
         t.start()
         threads.append(t)
