@@ -16,7 +16,6 @@ class Color:
     RESET = '\033[0m'
     BOLD = '\033[1m'
 
-
 def get_base_path():
     return Path("/storage/emulated/0/Live")
 
@@ -77,12 +76,13 @@ def start_stream(video_file, stream_key, stream_url, stream_duration):
         monitor_thread.start()
 
         def status_updater():
-            for i in range(stream_duration, 0, -60):
-                mins = i // 60
+            mins = stream_duration // 60
+            while mins > 0:
                 status = f"{Color.RED} LIVE: {video_file} | Sisa waktu: {mins} menit{Color.RESET}"
                 print(status)
                 with open(log_file, "a", encoding="utf-8") as log:
                     log.write(f"{status}\n")
+                mins -= 1
                 time.sleep(60)
 
         updater_thread = threading.Thread(target=status_updater)
