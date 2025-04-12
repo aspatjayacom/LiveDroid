@@ -15,7 +15,7 @@ class Color:
     CYAN = '\033[96m'
     RESET = '\033[0m'
     BOLD = '\033[1m'
-    BLINK = "\033[5m"
+
 
 def get_base_path():
     return Path("/storage/emulated/0/Live")
@@ -126,11 +126,13 @@ def read_stream_keys():
     return pairs
 
 def main():
-    print(f"{Color.RED}{Color.BOLD}{Color.BLINK}")
+    print(f"{Color.RED}{Color.BOLD}")
     print("==============================")
     print("     LIVE YOUTUBE ANDROID")
     print("     by Ananda Chakim")
-    print("==============================" + f"{Color.RESET}")
+    print("==============================" + f"{Color.RESET}", flush=True)
+    print()
+
     default_stream_url = "rtmp://a.rtmp.youtube.com/live2"
     stream_list = read_stream_keys()
     if not stream_list:
