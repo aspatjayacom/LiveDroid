@@ -25,7 +25,7 @@ def monitor_stderr(process, log_file):
             if any(keyword in line.lower() for keyword in ["error", "failed", "disconnect", "broken"]):
                 log.write(f"[!!] {line}")
 
-def start_stream(video_file, stream_key, stream_url, stream_duration):
+def start_stream(video_file, stream_key, stream_url, stream_duration, status_dict, lock):
     base_path = get_base_path()
     logs_dir = base_path
     logs_dir.mkdir(exist_ok=True)
@@ -77,13 +77,12 @@ def start_stream(video_file, stream_key, stream_url, stream_duration):
         def status_updater():
             mins = stream_duration // 60
             while mins > 0:
-                status = f"{Color.RED} LIVE: {video_file} | Sisa waktu: {mins} menit{Color.RESET}"
-                print(f"\r{status}", end="", flush=True)
+                with lock:
+                    status_dict[video_file] = mins
                 with open(log_file, "a", encoding="utf-8") as log:
-                    log.write(f"{status}\n")
+                    log.write(f"LIVE: {video_file} | Sisa waktu: {mins} menit\n")
                 mins -= 1
                 time.sleep(60)
-            print("\r", end="")
 
         updater_thread = threading.Thread(target=status_updater)
         updater_thread.start()
@@ -126,6 +125,14 @@ def read_stream_keys():
             pairs.append((video.strip(), key.strip()))
     return pairs
 
+def print_status_realtime(status_dict, lock):
+    while True:
+        with lock:
+            lines = [f"{Color.RED} LIVE: {video} | Sisa waktu: {mins} menit{Color.RESET}" for video, mins in status_dict.items()]
+        print("\033c", end="")  # Clear screen ANSI
+        print("\n".join(lines), flush=True)
+        time.sleep(60)
+
 def main():
     print(f"{Color.RED}{Color.BOLD}")
     print("==============================")
@@ -151,7 +158,10 @@ def main():
         full_url = f"{default_stream_url}/{stream_key}"
         confirm = input(f"{Color.YELLOW} Jalankan live streaming sekarang? (Y/N): {Color.RESET}").strip().upper()
         if confirm == "Y":
-            start_stream(video_file, stream_key, full_url, duration)
+            status_dict = {}
+            lock = threading.Lock()
+            threading.Thread(target=print_status_realtime, args=(status_dict, lock), daemon=True).start()
+            start_stream(video_file, stream_key, full_url, duration, status_dict, lock)
         else:
             print(f"{Color.RED} Live streaming dibatalkan.{Color.RESET}")
     else:
@@ -160,12 +170,16 @@ def main():
             print(f"{Color.RED} Live streaming dibatalkan.{Color.RESET}")
             return
 
+        status_dict = {}
+        lock = threading.Lock()
+        threading.Thread(target=print_status_realtime, args=(status_dict, lock), daemon=True).start()
+
         threads = []
         for idx, (video_file, stream_key) in enumerate(stream_list):
             full_url = f"{default_stream_url}/{stream_key}"
             t = threading.Thread(
                 target=start_stream,
-                args=(video_file, stream_key, full_url, duration)
+                args=(video_file, stream_key, full_url, duration, status_dict, lock)
             )
             t.start()
             threads.append(t)
