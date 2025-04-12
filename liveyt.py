@@ -78,11 +78,12 @@ def start_stream(video_file, stream_key, stream_url, stream_duration):
             mins = stream_duration // 60
             while mins > 0:
                 status = f"{Color.RED} LIVE: {video_file} | Sisa waktu: {mins} menit{Color.RESET}"
-                print(status, flush=True)
+                print(f"\r{status}", end="", flush=True)
                 with open(log_file, "a", encoding="utf-8") as log:
                     log.write(f"{status}\n")
                 mins -= 1
                 time.sleep(60)
+            print("\r", end="")
 
         updater_thread = threading.Thread(target=status_updater)
         updater_thread.start()
