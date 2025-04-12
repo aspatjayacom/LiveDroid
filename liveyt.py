@@ -72,14 +72,13 @@ def start_stream(video_file, stream_key, stream_url, stream_duration):
         ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
 
         monitor_thread = threading.Thread(target=monitor_stderr, args=(process, log_file))
-        monitor_thread.daemon = True
         monitor_thread.start()
 
         def status_updater():
             mins = stream_duration // 60
             while mins > 0:
                 status = f"{Color.RED} LIVE: {video_file} | Sisa waktu: {mins} menit{Color.RESET}"
-                print(status)
+                print(status, flush=True)
                 with open(log_file, "a", encoding="utf-8") as log:
                     log.write(f"{status}\n")
                 mins -= 1
@@ -89,6 +88,7 @@ def start_stream(video_file, stream_key, stream_url, stream_duration):
         updater_thread.start()
 
         updater_thread.join()
+        monitor_thread.join()
 
         process.terminate()
         try:
@@ -159,14 +159,19 @@ def main():
             print(f"{Color.RED} Live streaming dibatalkan.{Color.RESET}")
             return
 
+        threads = []
         for idx, (video_file, stream_key) in enumerate(stream_list):
             full_url = f"{default_stream_url}/{stream_key}"
-            threading.Thread(
+            t = threading.Thread(
                 target=start_stream,
-                args=(video_file, stream_key, full_url, duration),
-                daemon=True
-            ).start()
+                args=(video_file, stream_key, full_url, duration)
+            )
+            t.start()
+            threads.append(t)
             time.sleep(5)
+
+        for t in threads:
+            t.join()
 
 if __name__ == "__main__":
     main()
