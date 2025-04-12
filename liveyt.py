@@ -79,12 +79,12 @@ def start_stream(video_file, stream_key, stream_url, stream_duration, live_statu
             while mins > 0:
                 status = f"{Color.RED} LIVE: {video_file} | Sisa waktu: {mins} menit{Color.RESET}"
                 live_status[video_file] = status  # Update status in the shared dictionary
-                print("\r" + "\n".join(live_status.values()), end="", flush=True)  # Print all video statuses
+                print("\r" + "\n".join(live_status.values()), end="", flush=True)  # Print all video statuses in the same place
                 with open(log_file, "a", encoding="utf-8") as log:
                     log.write(f"{status}\n")
                 mins -= 1
                 time.sleep(60)
-            print("\r", end="")
+            print("\r", end="")  # Remove the final line after the stream ends
 
         updater_thread = threading.Thread(target=status_updater)
         updater_thread.start()
